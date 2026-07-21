@@ -1,8 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const userRoutes = require("./src/routers/users.router");
 const app = express();
 dotenv.config();
+
 app.use(express.json());
 
 const connectDB = async () => {
@@ -18,6 +20,7 @@ connectDB();
 app.get('/', (req, res) => {
     res.send("Hello from ShivCart Backend");
 });
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
