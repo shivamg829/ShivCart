@@ -1,0 +1,99 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/users.model");
+
+const createUser = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      address,
+      phone,
+      profilePicture,
+      password,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !address || !phone || !password) {
+      return res.status(400).json({
+        message: "All required fields must be provided",
+      });
+    }
+
+    // Validate address fields
+    const {
+      houseNo,
+      street,
+      city,
+      state,
+      country,
+      pincode,
+    } = address;
+
+    if (!houseNo || !street || !city || !state || !country || !pincode) {
+      return res.status(400).json({
+        message: "Complete address is required",
+      });
+    }
+
+    // Check whether email already exists
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "Email already exists",
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const newUser = await User.create({
+      name,
+      email,
+      address,
+      phone,
+      profilePicture,
+      password: hashedPassword,
+    });
+
+    // Generate JWT
+    const token = jwt.sign(
+      {
+        id: newUser._id,
+        role: newUser.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "30d",
+      }
+    );
+
+    // Return safe data
+    return res.status(201).json({
+      message: "User created successfully",
+      token,
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        address: newUser.address,
+        phone: newUser.phone,
+        profilePicture: newUser.profilePicture,
+        role: newUser.role,
+        createdAt: newUser.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Create user error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = {
+  createUser,
+};
