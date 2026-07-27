@@ -148,7 +148,39 @@ const loginUser = async (req, res) => {
     });
   }
 }
+const getUserProfile = async (req, res) => {
+  try {
+    const user = req.user;
+    
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "User profile retrieved successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        address: user.address,
+        phone: user.phone,
+        profilePicture: user.profilePicture,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Get user profile error:", error);
+    
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 module.exports = {
   createUser,
   loginUser,
+  getUserProfile,
 };
