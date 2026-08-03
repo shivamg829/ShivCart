@@ -189,8 +189,6 @@ const updateUserProfile = async (req, res) => {
         message: "User not found",
       });
     }
-
-    // Update user fields
     if (name) user.name = name;
     if (address) user.address = address;
     if (phone) user.phone = phone;
@@ -219,9 +217,56 @@ const updateUserProfile = async (req, res) => {
     });
   }
 };
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Current password and new password are required",
+      });
+    }
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Current password is incorrect",
+      });
+    }
+    const isSamePassword = await bcrypt.compare(
+      newPassword,
+      user.password
+    );
+    if (isSamePassword) {
+      return res.status(400).json({
+        message: "New password must be different from the current password",
+      });
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    return res.status(200).json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 module.exports = {
   createUser,
   loginUser,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  changePassword
 };

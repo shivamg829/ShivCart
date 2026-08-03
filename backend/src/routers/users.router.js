@@ -6,5 +6,5 @@ router.post("/register", createUser);
 router.post("/login", loginUser);
 router.get("/profile", authMiddleware.authenticateUser, getUserProfile);
 router.put("/profile", authMiddleware.authenticateUser, updateUserProfile);
-
+router.put("/change-password", authMiddleware.authenticateUser, changePassword);
 module.exports = router;
