@@ -179,8 +179,49 @@ const getUserProfile = async (req, res) => {
     });
   }
 };
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = req.user;
+    const { name, address, phone, profilePicture } = req.body;
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (address) user.address = address;
+    if (phone) user.phone = phone;
+    if (profilePicture) user.profilePicture = profilePicture;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "User profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        address: user.address,
+        phone: user.phone,
+        profilePicture: user.profilePicture,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Update user profile error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 module.exports = {
   createUser,
   loginUser,
   getUserProfile,
+  updateUserProfile
 };
