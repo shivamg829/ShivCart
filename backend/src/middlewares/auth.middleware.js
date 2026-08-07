@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user.model");
+const User = require("../models/users.model.js");
 
 const authenticateUser = async (req, res, next) => {
   const token = req.header("Authorization")?.replace("Bearer ", "");
@@ -31,25 +31,4 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
-const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-      });
-    }
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: "Access denied",
-      });
-    }
-
-    next();
-  };
-};
-
-module.exports = {
-  authenticateUser,
-  authorizeRoles,
-};
+module.exports = authenticateUser;

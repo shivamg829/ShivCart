@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const userRoutes = require("./src/routers/users.router");
+const productRoutes = require("./src/routers/products.router");
 const app = express();
 dotenv.config();
 
@@ -21,7 +22,7 @@ app.get('/', (req, res) => {
     res.send("Hello from ShivCart Backend");
 });
 app.use("/api/users", userRoutes);
-
+app.use("/api/products", productRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
