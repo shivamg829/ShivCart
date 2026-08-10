@@ -87,6 +87,36 @@ const addToCart = async (req, res) => {
   }
 };
 
+const getCart = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const cart = await Cart.findOne({ user: userId })
+      .populate("items.product");
+
+    if (!cart) {
+      return res.status(200).json({
+        message: "Cart is empty",
+        cart: {
+          user: userId,
+          items: [],
+        },
+      });
+    }
+
+    return res.status(200).json({
+      message: "Cart retrieved successfully",
+      cart,
+    });
+  } catch (error) {
+    console.error("Get cart error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 module.exports = {
   addToCart,
+  getCart,
 };
