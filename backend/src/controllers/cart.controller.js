@@ -52,7 +52,7 @@ const addToCart = async (req, res) => {
     }
 
     const existingItem = cart.items.find(
-      (item) => item.product.toString() === productId
+      (item) => item.product.toString() === productId,
     );
 
     if (existingItem) {
@@ -91,8 +91,7 @@ const getCart = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const cart = await Cart.findOne({ user: userId })
-      .populate("items.product");
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
     if (!cart) {
       return res.status(200).json({
@@ -144,7 +143,7 @@ const updateCart = async (req, res) => {
     }
 
     const itemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === productId
+      (item) => item.product.toString() === productId,
     );
 
     if (itemIndex === -1) {
@@ -185,9 +184,79 @@ const updateCart = async (req, res) => {
     });
   }
 };
+const deleteFromCart = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user._id;
 
+    if (!productId) {
+      return res.status(400).json({
+        message: "Product ID is required",
+      });
+    }
+
+    const cart = await Cart.findOne({ user: userId });
+
+    if (!cart) {
+      return res.status(404).json({
+        message: "Cart not found",
+      });
+    }
+
+    const itemIndex = cart.items.findIndex(
+      (item) => item.product.toString() === productId,
+    );
+
+    if (itemIndex === -1) {
+      return res.status(404).json({
+        message: "Product not found in cart",
+      });
+    }
+
+    cart.items.splice(itemIndex, 1);
+
+    await cart.save();
+
+    await cart.populate("items.product");
+
+    return res.status(200).json({
+      message: "Product removed from cart successfully",
+      cart,
+    });
+  } catch (error) {
+    console.error("Delete from cart error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+const clearCart = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      return res.status(404).json({
+        message: "Cart not found",
+      });
+    }
+    cart.items = [];
+    await cart.save();
+    return res.status(200).json({
+      message: "Cart cleared successfully",
+      cart,
+    });
+  }catch (error) {
+    console.error("Clear cart error:", error);  
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 module.exports = {
   addToCart,
   getCart,
   updateCart,
+  deleteFromCart,
+  clearCart,
 };
