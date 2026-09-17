@@ -135,7 +135,37 @@ const getOrdersByUserId = async (req, res) => {
   }
 };
 
+const getOrderById = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const userId = req.user._id;
+
+    const order = await Order.findOne({ _id: orderId, user: userId }).populate(
+      "orderItems.product",
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Order fetched successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Get order by ID error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrdersByUserId,
+  getOrderById,
 };
+
