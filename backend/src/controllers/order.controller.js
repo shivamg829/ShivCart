@@ -13,8 +13,15 @@ const createOrder = async (req, res) => {
       });
     }
 
-    const { houseNo, street, landmark, city, state, country, pincode } =
-      shippingAddress;
+    const {
+      houseNo,
+      street,
+      landmark,
+      city,
+      state,
+      country,
+      pincode,
+    } = shippingAddress;
 
     if (!houseNo || !street || !city || !state || !country || !pincode) {
       return res.status(400).json({
@@ -28,7 +35,9 @@ const createOrder = async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ user: userId }).populate("items.product");
+    const cart = await Cart.findOne({ user: userId }).populate(
+      "items.product"
+    );
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
@@ -37,7 +46,6 @@ const createOrder = async (req, res) => {
     }
 
     let itemsPrice = 0;
-
     const orderItems = [];
 
     for (const item of cart.items) {
@@ -69,8 +77,9 @@ const createOrder = async (req, res) => {
 
     const taxPrice = Number((itemsPrice * 0.18).toFixed(2));
     const shippingPrice = 0;
+
     const totalPrice = Number(
-      (itemsPrice + taxPrice + shippingPrice).toFixed(2),
+      (itemsPrice + taxPrice + shippingPrice).toFixed(2)
     );
 
     const newOrder = await Order.create({
@@ -140,9 +149,10 @@ const getOrderById = async (req, res) => {
     const orderId = req.params.id;
     const userId = req.user._id;
 
-    const order = await Order.findOne({ _id: orderId, user: userId }).populate(
-      "orderItems.product",
-    );
+    const order = await Order.findOne({
+      _id: orderId,
+      user: userId,
+    }).populate("orderItems.product");
 
     if (!order) {
       return res.status(404).json({
@@ -163,9 +173,60 @@ const getOrderById = async (req, res) => {
   }
 };
 
+const cancelOrder = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const userId = req.user._id;
+
+    const order = await Order.findOne({
+      _id: orderId,
+      user: userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    const cancellableStatuses = [
+      "Pending",
+      "Confirmed",
+      "Processing",
+    ];
+
+    if (!cancellableStatuses.includes(order.orderStatus)) {
+      return res.status(400).json({
+        message: `Order cannot be cancelled when status is ${order.orderStatus}`,
+      });
+    }
+
+    for (const item of order.orderItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity },
+      });
+    }
+
+    order.orderStatus = "Cancelled";
+
+    await order.save();
+
+    return res.status(200).json({
+      message: "Order cancelled successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Cancel order error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrdersByUserId,
   getOrderById,
+  cancelOrder,
 };
-
