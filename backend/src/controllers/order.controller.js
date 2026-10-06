@@ -223,10 +223,29 @@ const cancelOrder = async (req, res) => {
     });
   }
 };
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("user", "name email")
+      .populate("orderItems.product")
+      .sort({ createdAt: -1 });
 
+    return res.status(200).json({
+      message: "Orders fetched successfully",
+      orders,
+    });
+  } catch (error) {
+    console.error("Get all orders error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 module.exports = {
   createOrder,
   getOrdersByUserId,
   getOrderById,
   cancelOrder,
+  getAllOrders
 };
