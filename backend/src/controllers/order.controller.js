@@ -242,10 +242,62 @@ const getAllOrders = async (req, res) => {
     });
   }
 };
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { orderStatus } = req.body;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    const validStatuses = [
+      "Pending",
+      "Confirmed",
+      "Processing",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled",
+    ];
+
+    if (!validStatuses.includes(orderStatus)) {
+      return res.status(400).json({
+        message: "Invalid order status",
+      });
+    }
+
+    order.orderStatus = orderStatus;
+
+    if (orderStatus === "Delivered") {
+      order.isDelivered = true;
+      order.deliveredAt = new Date();
+    }
+
+    await order.save();
+
+    return res.status(200).json({
+      message: "Order status updated successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Update order status error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
 module.exports = {
   createOrder,
   getOrdersByUserId,
   getOrderById,
   cancelOrder,
-  getAllOrders
+  getAllOrders,
+  UpadateOrderStatus
 };
